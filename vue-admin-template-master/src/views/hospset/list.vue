@@ -13,8 +13,18 @@
       >
     </el-form>
 
+    <!--批量删除按钮 -->
+    <div>
+        <el-button type="danger" size="mini" @click="batchRemoveHospitalSetQD()">批量删除</el-button>
+    </div>
+
     <!-- banner列表 -->
-    <el-table :data="list" stripe style="width: 100%">
+    <el-table 
+        :data="list" 
+        stripe 
+        style="width: 100%" 
+        @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55"/>
       <el-table-column type="index" width="50" label="序号" />
       <el-table-column prop="hosname" label="医院名称" />
       <el-table-column prop="hoscode" label="医院编号" />
@@ -64,12 +74,14 @@ export default {
       searchObj: {}, //条件封装对象
       list: [], //每页数据集合
       total: 0, //总记录数
+      multipleSelection: [] // 批量选择中选择的记录列表
     };
   },
   created() {
     this.getList();
   },
   methods: {
+    //查询
     getList(page = 1) {
       this.current = page;
       hospset
@@ -84,6 +96,7 @@ export default {
         });
     },
 
+    //删除
     removeDataByIdQD(id) {
         this.$confirm('此操作将永久删除该医院设置信息, 是否继续?', '提示', {
           confirmButtonText: '确定',
@@ -107,8 +120,49 @@ export default {
             message: '已取消删除'
           });          
         });
-    }
+    },
+
+     //点击多选框时，获取到id值
+    handleSelectionChange(selection) {
+        this.multipleSelection = selection
+    },
+
+    //批量删除
+    batchRemoveHospitalSetQD() {
+        this.$confirm('此操作将永久删除该医院设置信息, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          var idList = []
+          //遍历数组得到每个id值，设置到idList里面
+          for(var i=0;i<this.multipleSelection.length;i++) {
+            var obj = this.multipleSelection[i]
+            var id = obj.id
+            idList.push(id)
+          }
+
+          hospset.batchRemoveHospitalSet(idList)
+            .then(response => {
+                //提示
+                this.$message({
+                    type: 'success',
+                    message: '删除成功!'
+                });
+                //刷新页面
+                this.getList(1)
+            })
+        
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });          
+        });
+    },
+
   },
+
 };
 </script>
 
